@@ -24,6 +24,11 @@ end
 post '/game' do
   params['username'] # fdoes not display if puts is used afterward
   session[:name] = params[:username]
+  session['dealer_score'] = 400
+  session['player_score'] = 0
+  session['player_cards'] = []
+  session['dealer_cards'] = []
+  erb :game
   # text =  session[:name]
   # puts text
 end
