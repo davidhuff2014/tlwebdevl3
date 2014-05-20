@@ -22,10 +22,10 @@ end
 # end
 
 post '/game' do
-  # params['username']
+  params['username'] # fdoes not display if puts is used afterward
   session[:name] = params[:username]
-  text =  session[:name]
-  puts text
+  # text =  session[:name]
+  # puts text
 end
 
 # get '/inline' do
