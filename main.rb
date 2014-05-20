@@ -17,7 +17,7 @@ post '/myaction' do
 end
 
 get '/inline' do
-  'Hi frmo the action'
+  'Hi from the action!'
 end
 
 get '/template' do
