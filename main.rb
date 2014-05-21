@@ -7,7 +7,9 @@ set :sessions, true
 
 get '/' do
   if session[:player_name]
-    redirect '/game'
+    session[:player_name] = ''  #take out after testing
+    redirect '/new_player'
+    # redirect '/bet'           # add back after testign
   else
     redirect '/new_player'
   end
@@ -19,7 +21,7 @@ end
 
 post '/new_player' do
   session[:player_name] = params[:player_name]
-  redirect '/game'
+  redirect '/bet'
 end
 
 get '/game' do
@@ -32,6 +34,16 @@ get '/game' do
   session[:dealer_cards] << session[:deck].pop
   session[:player_cards] << session[:deck].pop
   session[:dealer_cards] << session[:deck].pop
-  
+
   erb :game
+end
+
+get '/bet' do
+  session[:player_kitty] = 500
+  erb :bet
+end
+
+post '/bet' do
+  session[:bet_amount] = params[:bet_amount]
+  redirect '/game'
 end

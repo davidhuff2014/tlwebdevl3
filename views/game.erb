@@ -1,13 +1,6 @@
 <h1> Welcome to Blackjack!</h1>
 
-<p>Welcome <%= session[:player_name] %></p>
-
-Player's Cards:
-<ul>
-  <% session[:player_cards].each do |card| %>
-    <li><%= card.to_s %></li>
-  <% end %>
-</ul>
+<p>Welcome to this round of Blackjack, <%= session[:player_name] %>.</p>
 
 
 Dealer's Cards:
@@ -16,3 +9,16 @@ Dealer's Cards:
     <li><%= card.to_s %></li>
   <% end %>
 </ul>
+
+Player's Cards:
+<ul>
+  <% session[:player_cards].each do |card| %>
+    <li><%= card.to_s %></li>
+  <% end %>
+</ul>
+
+<h3>What would you like to do <%= session[:player_name] %>?</h3>
+<p id='action_buttons'> </p>
+<form id='hit' method='post' action='/game/player/hit'>
+  <input class='btn btn-success btn-large' type='submit' value='Hit Me!'>
+  </form>
