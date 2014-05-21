@@ -1,4 +1,18 @@
 <h1> Welcome to Blackjack!</h1>
 
-Player Score: <%= session['player_score'] %><br/>
-Dealer Score: <%= session['dealer_score'] %>
+<p>Welcome <%= session[:player_name] %></p>
+
+Player's Cards:
+<ul>
+  <% session[:player_cards].each do |card| %>
+    <li><%= card.to_s %></li>
+  <% end %>
+</ul>
+
+
+Dealer's Cards:
+<ul>
+  <% session[:dealer_cards].each do |card| %>
+    <li><%= card.to_s %></li>
+  <% end %>
+</ul>

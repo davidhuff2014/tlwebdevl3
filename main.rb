@@ -6,45 +6,32 @@ require 'sinatra/reloader'
 set :sessions, true
 
 get '/' do
-  redirect '/new_game'
+  if session[:player_name]
+    redirect '/game'
+  else
+    redirect '/new_player'
+  end
 end
 
-get '/new_game' do
-  erb :'users/new_game'
+get '/new_player' do
+  erb :new_player
 end
 
-# get '/home'  do
-#   'Welcome Home to Ruby, again!'
-# end
+post '/new_player' do
+  session[:player_name] = params[:player_name]
+  redirect '/game'
+end
 
-# get '/form' do
-#   erb :form
-# end
-
-post '/game' do
-  params['username'] # fdoes not display if puts is used afterward
-  session[:name] = params[:username]
-  session['dealer_score'] = 400
-  session['player_score'] = 0
-  session['player_cards'] = []
-  session['dealer_cards'] = []
+get '/game' do
+  suits = %w(H D C S)
+  values = %w(2 3 4 5 6 7 8 9 10 J Q K A)
+  session[:deck] = suits.product(values).shuffle!
+  session[:player_cards] = []
+  session[:dealer_cards] = []
+  session[:player_cards] << session[:deck].pop
+  session[:dealer_cards] << session[:deck].pop
+  session[:player_cards] << session[:deck].pop
+  session[:dealer_cards] << session[:deck].pop
+  
   erb :game
-  # text =  session[:name]
-  # puts text
 end
-
-# get '/inline' do
-#   'Hi from the action!'
-# end
-
-# get '/template' do
-#   erb :mytemplate
-# end
-
-# get '/nested_template' do
-#   erb :'users/profile'
-# end
-
-# get '/nothere' do
-#   redirect '/inline'
-# end
