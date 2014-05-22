@@ -10,6 +10,7 @@ Dealer's Cards:
   <% end %>
 </ul>
 
+
 Player's Cards:
 <ul>
   <% session[:player_cards].each do |card| %>
@@ -18,7 +19,9 @@ Player's Cards:
 </ul>
 
 <h3>What would you like to do <%= session[:player_name] %>?</h3>
-<p id='action_buttons'> </p>
 <form id='hit' method='post' action='/game/player/hit'>
   <input class='btn btn-success btn-large' type='submit' value='Hit Me!'>
-  </form>
+</form>
+<form id='stay' method='post' action='/game/player/stay'>
+  <input class='btn btn-danger btn-large' type='submit' value="I'm Staying!">
+</form>

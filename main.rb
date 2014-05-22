@@ -7,7 +7,7 @@ set :sessions, true
 
 get '/' do
   if session[:player_name]
-    session[:player_name] = ''  #take out after testing
+    session[:player_name] = ''  # take out after testing
     redirect '/new_player'
     # redirect '/bet'           # add back after testign
   else
@@ -34,6 +34,8 @@ get '/game' do
   session[:dealer_cards] << session[:deck].pop
   session[:player_cards] << session[:deck].pop
   session[:dealer_cards] << session[:deck].pop
+  session[:player_score] = 0
+  session[:dealer_score] = 0
 
   erb :game
 end
@@ -47,3 +49,41 @@ post '/bet' do
   session[:bet_amount] = params[:bet_amount]
   redirect '/game'
 end
+
+# get '/game/player/hit' do
+#   if session[:player_score] == 21
+#     session[:end_message] = 'You have won!'
+#     erb :game_over
+#   end
+#   if session[:player_kitty] == 0
+#     session[:end_message] = 'You are out of money'
+#     erb :game_over
+#   end
+# end
+
+post '/game/player/hit' do
+  redirect '/game_over'
+end
+
+get '/game_over' do
+  if session[:player_score] == 21
+    session[:end_message] = 'You have won!'
+    erb :game_over
+  end
+  if session[:player_kitty] == 0
+    session[:end_message] = 'You are out of money'
+    erb :game_over
+  end
+  erb :game_over
+end
+
+# post '/game_over' do
+#   if session[:player_score] == 21
+#     session[:end_message] = 'You have won!'
+#     # erb :game_over
+#   end
+#   if session[:player_kitty] == 0
+#     session[:end_message] = 'You are out of money'
+#     # erb :game_over
+#   end
+# end
