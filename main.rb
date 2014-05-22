@@ -85,11 +85,23 @@ get '/game' do
     session[:player_score] = session[:total]
   end
 
+  if session[:player_stays] = true
+    session[:dealer_cards] << session[:deck].pop
+    calc_total(session[:dealer_cards])
+    session[:dealer_score] = session[:total]
+  end
+# need to blow out here if someone goes over 21
+
   erb :game
 end
 
 get '/bet' do
   session[:player_kitty] = 500
+  if session[:player_score] > 21 || session[:dealer_score] > 21
+    session[:player_cards] = []
+    session[:dealer_cards] = []
+  end
+
   erb :bet
 end
 
@@ -101,17 +113,17 @@ end
 post '/game/player/hit' do
   session[:player_hits] = true
   redirect '/game'
-  # session[:player_score] == 21  ? session[:end_message] = 'You have won!'         : ''
-  # session[:player_kitty] == 0   ? session[:end_message] = 'You are out of money'  : ''
-  # session[:player_kitty] >= 500 ? session[:end_message] = 'Quitting so soon?'     : ''
-
-  # redirect '/game_over'
 end
 
 get '/game_over' do
+  session[:player_kitty] == 0   ? session[:end_message] = 'You are out of money'  : ''
+  session[:player_kitty] >= 500 ? session[:end_message] = 'Quitting so soon?'     : ''
+
   erb :game_over
 end
 
 post '/game/player/stay' do
+  session[:player_hits] = false
+  session[:player_stays] = true
   redirect '/game'
 end

@@ -1,3 +1,12 @@
+<% if session[:player_score] > 21 %>
+  <div class='alert alert-error'>
+  <%= session[:player_name] %> has busted, game over!
+  </div>
+
+   <h5>Play again?</h5>
+   <a class='btn btn-primary' href='/bet'>Yes</a>
+   <a class='btn' href='/game_over'>No</a>
+<% end %>
 <h1> Welcome to Blackjack!</h1>
 <p>Welcome to this round of Blackjack, <%= session[:player_name] %>.</p>
 
@@ -27,4 +36,4 @@ Player's Cards:
   <input class='btn btn-danger btn-large' type='submit' value="I'm Staying!">
 </form>
 </div>
-# <%= session[:player_hits] %>  # for testing only
+<!-- <%= session[:player_hits] %> -->
