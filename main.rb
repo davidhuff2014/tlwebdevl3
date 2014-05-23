@@ -38,6 +38,10 @@ get '/' do
     session[:player_cards] = []
     session[:dealer_cards] = []
     session[:player_hits] = false
+    session[:dealer_hits] = false
+    session[:dealer_turn] = false
+    session[:player_turn] = false
+    session[:game_over] = false
     redirect '/new_player'        # change redirect after testing
   else
     session[:player_score] = 0
@@ -46,6 +50,11 @@ get '/' do
     session[:player_cards] = []
     session[:dealer_cards] = []
     session[:player_hits] = false
+    session[:dealer_hits] = false
+    session[:dealer_turn] = false
+    session[:player_turn] = false
+    session[:game_over] = false
+
     redirect '/new_player'
   end
 end
@@ -75,32 +84,41 @@ get '/game' do
     session[:player_score] = session[:total]
     calc_total(session[:dealer_cards])
     session[:dealer_score] = session[:total]
-
     session[:player_hits] = false
+    session[:player_stays] = false
+    session[:dealer_turn]  = false
+    session[:game_over] = false
+    session[:dealer_turn] = true if session[:player_score] == 21
+
   end
 
   if session[:player_hits] == true
     session[:player_cards] << session[:deck].pop
     calc_total(session[:player_cards])
     session[:player_score] = session[:total]
+    session[:dealer_turn] = true if session[:player_score] == 21
   end
 
-  if session[:player_stays] = true
-    session[:dealer_cards] << session[:deck].pop
-    calc_total(session[:dealer_cards])
-    session[:dealer_score] = session[:total]
+  if session[:dealer_turn] == true
+    while session[:dealer_score] <= 17
+      session[:dealer_cards] << session[:deck].pop
+      calc_total(session[:dealer_cards])
+      session[:dealer_score] = session[:total]
+      session[:dealer_turn] = true if session[:dealer_score] == 21
+    end
   end
-# need to blow out here if someone goes over 21
+
+  # need to blow out here if someone goes over 21
 
   erb :game
 end
 
 get '/bet' do
   session[:player_kitty] = 500
-  if session[:player_score] > 21 || session[:dealer_score] > 21
-    session[:player_cards] = []
-    session[:dealer_cards] = []
-  end
+  session[:player_cards] = []
+  session[:dealer_cards] = []
+  session[:player_score] = 0
+  session[:dealer_score] = 0
 
   erb :bet
 end
@@ -125,5 +143,6 @@ end
 post '/game/player/stay' do
   session[:player_hits] = false
   session[:player_stays] = true
+  session[:dealer_turn] = true
   redirect '/game'
 end

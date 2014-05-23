@@ -1,5 +1,8 @@
+<%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
 <% if session[:player_score] > 21 %>
   <div class='alert alert-error'>
+  <% session[:game_over] = true %>
+  <% session[:player_kitty] -= session[:bet_amount].to_i %>
   <%= session[:player_name] %> has busted, game over!
   </div>
 
@@ -7,8 +10,42 @@
    <a class='btn btn-primary' href='/bet'>Yes</a>
    <a class='btn' href='/game_over'>No</a>
 <% end %>
+<% if session[:dealer_score] > 21 %>
+<% session[:game_over] = true %>
+  <div class='alert alert-error'>
+  Dealer has busted, game over!
+  </div>
+
+   <h5>Play again?</h5>
+   <a class='btn btn-primary' href='/bet'>Yes</a>
+   <a class='btn' href='/game_over'>No</a>
+<% end %>
+<% if session[:dealer_score] >= session[:player_score] %>
+  <% if session[:dealer_score] <= 21 && session[:dealer_turn] == true%>
+    <div class='alert alert-error'>
+    Dealer has won!
+    </div>
+
+    <h5>Play again?</h5>
+    <a class='btn btn-primary' href='/bet'>Yes</a>
+    <a class='btn' href='/game_over'>No</a>
+  <% end %>
+<% end %>
+<% if session[:dealer_score] < session[:player_score] %>
+    <% if session[:player_score] <= 21 && session[:dealer_turn]  == true %>
+  <div class='alert alert-info'>
+  <%= session[:player_name] %> has won!
+  </div>
+
+   <h5>Play again?</h5>
+   <a class='btn btn-primary' href='/bet'>Yes</a>
+   <a class='btn' href='/game_over'>No</a>
+<% end %>
+<% end %>
+
 <h1> Welcome to Blackjack!</h1>
 <p>Welcome to this round of Blackjack, <%= session[:player_name] %>.</p>
+<%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
 
 <div id="dealer" class="well">
 Dealer's Cards:
@@ -28,6 +65,7 @@ Player's Cards:
   <% end %>
 </ul>
 <ul>Player Total: <%= session[:player_score] %></ul>
+<% if session[:game_over] != true && session[:dealer_turn] != true %>
 <h3>What would you like to do <%= session[:player_name] %>?</h3>
 <form id='hit' method='post' action='/game/player/hit'>
   <input class='btn btn-success btn-large' type='submit' value='Hit Me!'>
@@ -36,4 +74,5 @@ Player's Cards:
   <input class='btn btn-danger btn-large' type='submit' value="I'm Staying!">
 </form>
 </div>
+<% end %>
 <!-- <%= session[:player_hits] %> -->
