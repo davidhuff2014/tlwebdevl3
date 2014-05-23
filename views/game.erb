@@ -1,9 +1,10 @@
-<%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
 <% if session[:player_score] > 21 %>
   <div class='alert alert-error'>
   <% session[:game_over] = true %>
   <% session[:player_kitty] -= session[:bet_amount].to_i %>
   <%= session[:player_name] %> has busted, game over!
+  <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
+
   </div>
 
    <h5>Play again?</h5>
@@ -12,8 +13,12 @@
 <% end %>
 <% if session[:dealer_score] > 21 %>
 <% session[:game_over] = true %>
+  <% session[:player_kitty] += session[:bet_amount].to_i %>
+
   <div class='alert alert-error'>
   Dealer has busted, game over!
+    <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
+
   </div>
 
    <h5>Play again?</h5>
@@ -23,23 +28,31 @@
 <% if session[:dealer_score] >= session[:player_score] %>
   <% if session[:dealer_score] <= 21 && session[:dealer_turn] == true%>
     <div class='alert alert-error'>
+      <% session[:player_kitty] -= session[:bet_amount].to_i %>
+
     Dealer has won!
     </div>
 
     <h5>Play again?</h5>
     <a class='btn btn-primary' href='/bet'>Yes</a>
     <a class='btn' href='/game_over'>No</a>
+        <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
+
   <% end %>
 <% end %>
 <% if session[:dealer_score] < session[:player_score] %>
     <% if session[:player_score] <= 21 && session[:dealer_turn]  == true %>
   <div class='alert alert-info'>
   <%= session[:player_name] %> has won!
+        <% session[:player_kitty] += session[:bet_amount].to_i %>
+
   </div>
 
    <h5>Play again?</h5>
    <a class='btn btn-primary' href='/bet'>Yes</a>
    <a class='btn' href='/game_over'>No</a>
+   <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
+
 <% end %>
 <% end %>
 

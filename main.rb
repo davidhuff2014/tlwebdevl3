@@ -28,11 +28,11 @@ helpers do
 end
 
 get '/' do
-  if session[:player_name]
-    session[:player_name] = ''    # take out after testing
+  if session[:player_name] != ''
+    puts session[:player_name]
+    # session[:player_name] = ''    # take out after testing
 
-    # redirect '/bet'             # add back after testign
-    session[:player_kitty] = 500  # take out after testing
+    session[:player_kitty] = 500
     session[:player_score] = 0
     session[:dealer_score] = 0
     session[:player_cards] = []
@@ -42,7 +42,9 @@ get '/' do
     session[:dealer_turn] = false
     session[:player_turn] = false
     session[:game_over] = false
-    redirect '/new_player'        # change redirect after testing
+    # redirect '/new_player'        # change redirect after testing
+    redirect '/bet'             # add back after testign
+
   else
     session[:player_score] = 0
     session[:dealer_score] = 0
@@ -114,17 +116,23 @@ get '/game' do
 end
 
 get '/bet' do
-  session[:player_kitty] = 500
+  # session[:player_kitty] = 500
   session[:player_cards] = []
   session[:dealer_cards] = []
   session[:player_score] = 0
   session[:dealer_score] = 0
+  if session[:player_kitty] <= 0
+    redirect '/game_over'
+  end
 
   erb :bet
 end
 
 post '/bet' do
   session[:bet_amount] = params[:bet_amount]
+  if session[:bet_amount].to_i > session[:player_kitty].to_i
+    redirect '/game_over'
+  end
   redirect '/game'
 end
 
@@ -134,8 +142,13 @@ post '/game/player/hit' do
 end
 
 get '/game_over' do
-  session[:player_kitty] == 0   ? session[:end_message] = 'You are out of money'  : ''
-  session[:player_kitty] >= 500 ? session[:end_message] = 'Quitting so soon?'     : ''
+  if session[:bet_amount].to_i > session[:player_kitty].to_i
+    session[:end_message] = 'You tried to bet more than you had, out of the game'
+  else
+    session[:player_name] = ''
+    session[:player_kitty] <= 0   ? session[:end_message] = 'You are out of money'  : ''
+    session[:player_kitty] >= 500 ? session[:end_message] = 'Quitting so soon?'     : ''
+  end
 
   erb :game_over
 end
