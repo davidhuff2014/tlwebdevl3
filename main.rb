@@ -2,8 +2,12 @@
 require 'rubygems'
 require 'sinatra'
 require 'sinatra/reloader'
+require 'pry'
 
 set :sessions, true
+
+BLACKJACK_AMT = 21
+DEALER_MIN_HIT = 17
 
 helpers do
   def calc_total(cards)
@@ -21,10 +25,36 @@ helpers do
     end
 
     arr.select { |e| e == 'A' }.count.times do
-      total -= 10 if total > 21
+      total -= 10 if total > BLACKJACK_AMT
     end
     session[:total] = total
   end
+
+  def card_image(card)
+    suit =  case card[0]
+            when 'H' then 'hearts'
+            when 'D' then 'diamonds'
+            when 'S' then 'spades'
+            when 'C' then 'clubs'
+    end
+
+    value = card[1]
+    if %w(J Q K A).include?(value)
+      value = case card[1]
+              when 'J' then 'jack'
+              when 'Q' then 'queen'
+              when 'K' then 'king'
+              when 'A' then 'ace'
+      end
+    end
+
+    "<img src='/images/cards/#{suit}_#{value}.jpg' class='card_image'>"
+    
+  end
+end
+binding.pry
+before do
+  @show_hit_or_stay_buttons = true
 end
 
 get '/' do
@@ -90,27 +120,30 @@ get '/game' do
     session[:player_stays] = false
     session[:dealer_turn]  = false
     session[:game_over] = false
-    session[:dealer_turn] = true if session[:player_score] == 21
-
+    session[:dealer_turn] = true if session[:player_score] == BLACKJACK_AMT
+# binding.pry
   end
 
   if session[:player_hits] == true
     session[:player_cards] << session[:deck].pop
     calc_total(session[:player_cards])
     session[:player_score] = session[:total]
-    session[:dealer_turn] = true if session[:player_score] == 21
+    @show_hit_or_stay_buttons = false if session[:player_score] == BLACKJACK_AMT
+    @show_hit_or_stay_buttons = false if session[:player_stays] == true
+
+    session[:dealer_turn] = true if session[:player_score] == BLACKJACK_AMT
   end
 
   if session[:dealer_turn] == true
-    while session[:dealer_score] <= 17
+    while session[:dealer_score] < DEALER_MIN_HIT
       session[:dealer_cards] << session[:deck].pop
       calc_total(session[:dealer_cards])
       session[:dealer_score] = session[:total]
-      session[:dealer_turn] = true if session[:dealer_score] == 21
+      session[:dealer_turn] = true if session[:dealer_score] == BLACKJACK_AMT
     end
   end
 
-  # need to blow out here if someone goes over 21
+  # need to blow out here if someone goes over BLACKJACK_AMT
 
   erb :game
 end
@@ -131,7 +164,8 @@ end
 post '/bet' do
   session[:bet_amount] = params[:bet_amount]
   if session[:bet_amount].to_i > session[:player_kitty].to_i
-    redirect '/game_over'
+    @error = 'You are trying to bet more money than you have'
+    halt erb(:bet)  
   end
   redirect '/game'
 end
@@ -142,13 +176,9 @@ post '/game/player/hit' do
 end
 
 get '/game_over' do
-  if session[:bet_amount].to_i > session[:player_kitty].to_i
-    session[:end_message] = 'You tried to bet more than you had, out of the game'
-  else
     session[:player_name] = ''
-    session[:player_kitty] <= 0   ? session[:end_message] = 'You are out of money'  : ''
-    session[:player_kitty] >= 500 ? session[:end_message] = 'Quitting so soon?'     : ''
-  end
+    session[:player_kitty] == 0   ? session[:end_message] = 'You are out of money'  : ''
+    session[:player_kitty] >= 0 ? session[:end_message] = 'Quitting so soon?'     : ''
 
   erb :game_over
 end
@@ -157,5 +187,8 @@ post '/game/player/stay' do
   session[:player_hits] = false
   session[:player_stays] = true
   session[:dealer_turn] = true
-  redirect '/game'
+  @success = 'You have chosen to stay'
+  @show_hit_or_stay_buttons = false
+  redirect '/game' # my own
+  # erb :game # from solution
 end
