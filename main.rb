@@ -2,7 +2,7 @@
 require 'rubygems'
 require 'sinatra'
 require 'sinatra/reloader'
-require 'pry'
+# require 'pry'
 
 set :sessions, true
 
@@ -49,45 +49,41 @@ helpers do
     end
 
     "<img src='/images/cards/#{suit}_#{value}.jpg' class='card_image'>"
-    
+  end
+
+  def winner!(msg)
+    @play_again = true
+    @how_hit_or_stay_buttons = false
+    @success = "<strong>#{session[:player_name]} has won!</strong> #{msg}"
+  end
+
+  def loser!(msg)
+    @play_again = true
+    @show_hit_or_stay_buttons = false
+    @error = "<strong>#{session[:player_name]} loses.</strong> #{msg}"
+  end
+
+  def tie!(msg)
+    @play_again = true
+    @show_hit_or_stay_buttons = false
+    @success = "<strong>It's a tie!</strong> #{msg}"
+  end
+
+  def init_session_variables
+    session[:player_bankroll] = 500
   end
 end
-binding.pry
+
 before do
   @show_hit_or_stay_buttons = true
 end
 
 get '/' do
-  if session[:player_name] != ''
-    puts session[:player_name]
-    # session[:player_name] = ''    # take out after testing
-
-    session[:player_kitty] = 500
-    session[:player_score] = 0
-    session[:dealer_score] = 0
-    session[:player_cards] = []
-    session[:dealer_cards] = []
-    session[:player_hits] = false
-    session[:dealer_hits] = false
-    session[:dealer_turn] = false
-    session[:player_turn] = false
-    session[:game_over] = false
-    # redirect '/new_player'        # change redirect after testing
-    redirect '/bet'             # add back after testign
-
+  if session[:player_name]
+    erb :bet
   else
-    session[:player_score] = 0
-    session[:dealer_score] = 0
-    session[:player_kitty] = 500
-    session[:player_cards] = []
-    session[:dealer_cards] = []
-    session[:player_hits] = false
-    session[:dealer_hits] = false
-    session[:dealer_turn] = false
-    session[:player_turn] = false
-    session[:game_over] = false
-
-    redirect '/new_player'
+    init_session_variables
+    erb :new_player
   end
 end
 
@@ -96,99 +92,130 @@ get '/new_player' do
 end
 
 post '/new_player' do
+  if params[:player_name].empty?
+    @error = 'Name is required'
+    halt erb(:new_player)
+  end
+
   session[:player_name] = params[:player_name]
   redirect '/bet'
 end
 
 get '/game' do
-  if session[:player_score] == 0
-    suits = %w(H D C S)
-    values = %w(2 3 4 5 6 7 8 9 10 J Q K A)
-    session[:deck] = suits.product(values).shuffle!
-    # session[:player_cards] = []
-    # session[:dealer_cards] = []
-    session[:player_cards] << session[:deck].pop
-    session[:dealer_cards] << session[:deck].pop
-    session[:player_cards] << session[:deck].pop
-    session[:dealer_cards] << session[:deck].pop
+  session[:turn] = session[:player_name]
+  suits = %w(H D C S)
+  values = %w(2 3 4 5 6 7 8 9 10 J Q K A)
+  session[:deck] = suits.product(values).shuffle!
 
-    calc_total(session[:player_cards])
-    session[:player_score] = session[:total]
-    calc_total(session[:dealer_cards])
-    session[:dealer_score] = session[:total]
-    session[:player_hits] = false
-    session[:player_stays] = false
-    session[:dealer_turn]  = false
-    session[:game_over] = false
-    session[:dealer_turn] = true if session[:player_score] == BLACKJACK_AMT
-# binding.pry
+  session[:player_cards] = []
+  session[:dealer_cards] = []
+  session[:player_cards] << session[:deck].pop
+  session[:dealer_cards] << session[:deck].pop
+  session[:player_cards] << session[:deck].pop
+  session[:dealer_cards] << session[:deck].pop
+
+  player_total = calc_total(session[:player_cards])
+  if player_total == BLACKJACK_AMT
+    winner!("#{session[:player_name]} hit blackjack.")
+    redirect '/game/dealer'
   end
 
-  if session[:player_hits] == true
-    session[:player_cards] << session[:deck].pop
-    calc_total(session[:player_cards])
-    session[:player_score] = session[:total]
-    @show_hit_or_stay_buttons = false if session[:player_score] == BLACKJACK_AMT
-    @show_hit_or_stay_buttons = false if session[:player_stays] == true
+  erb :game
+end
 
-    session[:dealer_turn] = true if session[:player_score] == BLACKJACK_AMT
+post '/game/player/hit' do
+  session[:player_cards] << session[:deck].pop
+  player_total = calc_total(session[:player_cards])
+  if player_total == BLACKJACK_AMT
+    winner!("#{session[:player_name]} hit blackjack.")
+    redirect '/game/dealer'
+  elsif player_total > BLACKJACK_AMT
+    session[:player_bankroll] -= session[:bet_amount].to_i
+    loser!("It looks like #{session[:player_name]} has busted at #{player_total}.")
   end
 
-  if session[:dealer_turn] == true
-    while session[:dealer_score] < DEALER_MIN_HIT
-      session[:dealer_cards] << session[:deck].pop
-      calc_total(session[:dealer_cards])
-      session[:dealer_score] = session[:total]
-      session[:dealer_turn] = true if session[:dealer_score] == BLACKJACK_AMT
-    end
+  erb :game
+end
+
+post '/game/player/stay' do
+  @show_hit_or_stay_buttons = false
+  redirect '/game/dealer'
+end
+
+get '/game/dealer' do
+  @success = "#{session[:player_name]} has chosen to stay."
+
+  session[:turn] = 'dealer'
+  @show_hit_or_stay_buttons = false
+
+  dealer_total = calc_total(session[:dealer_cards])
+
+  if dealer_total == BLACKJACK_AMT
+    session[:player_bankroll] -= session[:bet_amount].to_i
+    loser!('Dealer hit blackjack.')
+  elsif dealer_total >= DEALER_MIN_HIT
+    redirect '/game/compare'
+  else
+    @show_dealer_hit_button = true
   end
 
-  # need to blow out here if someone goes over BLACKJACK_AMT
+  erb :game
+end
+
+post '/game/dealer/hit' do
+  session[:dealer_cards] << session[:deck].pop
+  redirect '/game/dealer'
+end
+
+get '/game/compare' do
+  @show_hit_or_stay_buttons = false
+
+  player_total = calc_total(session[:player_cards])
+  dealer_total = calc_total(session[:dealer_cards])
+
+  if dealer_total > BLACKJACK_AMT
+    winner!("#{session[:player_name]} stayed at #{player_total} and the dealer busted at #{dealer_total}.")
+    session[:player_bankroll] += session[:bet_amount].to_i
+  elsif player_total < dealer_total
+    loser!("#{session[:player_name]} stayed at #{player_total} and the dealer stayed at #{dealer_total}.")
+    session[:player_bankroll] -= session[:bet_amount].to_i
+  elsif player_total > dealer_total
+    winner!("#{session[:player_name]} stayed at #{player_total} and the dealer stayed at #{dealer_total}.")
+    session[:player_bankroll] += session[:bet_amount].to_i
+
+  else
+    tie!("Both #{session[:player_name]} and the dealer stayed at #{player_total} ")
+  end
 
   erb :game
 end
 
 get '/bet' do
-  # session[:player_kitty] = 500
-  session[:player_cards] = []
-  session[:dealer_cards] = []
-  session[:player_score] = 0
-  session[:dealer_score] = 0
-  if session[:player_kitty] <= 0
+  if session[:player_bankroll].to_i <= 0
     redirect '/game_over'
+  else
+    erb :bet
   end
-
-  erb :bet
 end
 
 post '/bet' do
-  session[:bet_amount] = params[:bet_amount]
-  if session[:bet_amount].to_i > session[:player_kitty].to_i
-    @error = 'You are trying to bet more money than you have'
-    halt erb(:bet)  
-  end
-  redirect '/game'
-end
+  redirect '/game_over' if session[:player_bankroll].to_i <= 0
 
-post '/game/player/hit' do
-  session[:player_hits] = true
+  session[:bet_amount] = params[:bet_amount]
+  if session[:bet_amount].to_i > session[:player_bankroll].to_i
+    @error = 'You are trying to bet more money than you have'
+    halt erb(:bet)
+  elsif session[:bet_amount].to_i == 0 || session[:bet_amount] == ''
+    @error = 'You must bet something!'
+    halt erb(:bet)
+  end
+
   redirect '/game'
 end
 
 get '/game_over' do
-    session[:player_name] = ''
-    session[:player_kitty] == 0   ? session[:end_message] = 'You are out of money'  : ''
-    session[:player_kitty] >= 0 ? session[:end_message] = 'Quitting so soon?'     : ''
+  session[:player_bankroll].to_i == 0 ? session[:end_message] = 'You are out of money'  : ''
+  session[:player_bankroll].to_i >= 0 ? session[:end_message] = 'Quitting so soon?'     : ''
 
   erb :game_over
-end
-
-post '/game/player/stay' do
-  session[:player_hits] = false
-  session[:player_stays] = true
-  session[:dealer_turn] = true
-  @success = 'You have chosen to stay'
-  @show_hit_or_stay_buttons = false
-  redirect '/game' # my own
-  # erb :game # from solution
 end

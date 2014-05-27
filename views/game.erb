@@ -1,92 +1,52 @@
-<% if session[:player_score] > BLACKJACK_AMT %>
-  <div class='alert alert-error'>
-  <% session[:game_over] = true %>
-  <% session[:player_kitty] -= session[:bet_amount].to_i %>
-  <%= session[:player_name] %> has busted, game over!
-  <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
-
-  </div>
-
-   <h5>Play again?</h5>
-   <a class='btn btn-primary' href='/bet'>Yes</a>
-   <a class='btn' href='/game_over'>No</a>
-<% end %>
-<% if session[:dealer_score] > BLACKJACK_AMT %>
-      <% session[:game_over] = true %>
-      <% session[:player_kitty] += session[:bet_amount].to_i %>
-
-    <div class='alert alert-error'>
-      Dealer has busted, game over!
-      <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
-    </div>
-
-    <h5>Play again?</h5>
-    <a class='btn btn-primary' href='/bet'>Yes</a>
-    <a class='btn' href='/game_over'>No</a>
-<% end %>
-<% if session[:dealer_score] >= session[:player_score] %>
-  <% if session[:dealer_score] <= BLACKJACK_AMT && session[:dealer_turn] == true%>
-    <div class='alert alert-error'>
-      <% session[:player_kitty] -= session[:bet_amount].to_i %>
-
-    Dealer has won!
-    </div>
-
-    <h5>Play again?</h5>
-    <a class='btn btn-primary' href='/bet'>Yes</a>
-    <a class='btn' href='/game_over'>No</a>
-        <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
-
-  <% end %>
-<% end %>
-<% if session[:dealer_score] < session[:player_score] %>
-    <% if session[:player_score] <= BLACKJACK_AMT && session[:dealer_turn]  == true %>
-  <div class='alert alert-info'>
-  <%= session[:player_name] %> has won!
-        <% session[:player_kitty] += session[:bet_amount].to_i %>
-
-  </div>
-
-   <h5>Play again?</h5>
-   <a class='btn btn-primary' href='/bet'>Yes</a>
-   <a class='btn' href='/game_over'>No</a>
-   <%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
-
-<% end %>
-<% end %>
-
 <h1> Welcome to Blackjack!</h1>
-<p>Welcome to this round of Blackjack, <%= session[:player_name] %>.</p>
-<%= session[:player_name] %> your kitty is <%= session[:player_kitty] %>
+
+<% if @play_again %>
+  <p>
+   <strong>Play Again?</strong>
+   <a class='btn btn-primary' href='/bet'>Yes</a>
+   <a class='btn' href='/game_over'>No</a>
+   </p>
+<% end %>
 
 <div id="dealer" class="well">
-<h4>Dealer's Cards:</h4>
-  <% session[:dealer_cards].each_with_index do |card, i| %>
-    <% if session[:dealer_turn] == false && i == 0 %> 
+  <h4>Dealer's Cards:</h4>
+    <% session[:dealer_cards].each_with_index do |card, i| %>
+      <% if session[:turn] != 'dealer' && i == 0 %> 
         <img src='/images/cards/cover.jpg'>
-    <% else %>
-      <%= card_image(card) %>
+      <% else %>
+        <%= card_image(card) %>
+      <% end %>
     <% end %>
-  <% end %>
-    <% if session[:dealer_turn] == true %> 
-      <ul>Dealer Total: <%= session[:dealer_score] %></ul>
+
+    <% if @show_dealer_hit_button %> 
+    <p>
+      <h5>Dealer has <%= calc_total(session[:dealer_cards]) %> and will hit.</h5>
+      <form action='/game/dealer/hit' method='post'>
+        <input type='submit' class='btn btn-primary' value='Click to see dealer card &rarr;'>
+      </form>
+      </p>
     <% end %>
 </div>
 
+<br/>
 <div id="player" class="well">
-<h4>Player's Cards:</h4>
+  <h4>Player's Cards:</h4>
   <% session[:player_cards].each do |card| %>
     <%= card_image(card) %>
   <% end %>
-<ul>Player Total: <%= session[:player_score] %></ul>
-<% if session[:game_over] != true && session[:dealer_turn] != true %>
- <% # if @show_hit_or_stay_buttons %>
-<h3>What would you like to do <%= session[:player_name] %>?</h3>
-<form id='hit' method='post' action='/game/player/hit'>
-  <input class='btn btn-success btn-large' type='submit' value='Hit Me!'>
-</form>
-<form id='stay' method='post' action='/game/player/stay'>
-  <input class='btn btn-danger btn-large' type='submit' value="I'm Staying!">
-</form>
 </div>
-<% end %>
+
+<p>
+  <% if @show_hit_or_stay_buttons %>
+  <%= session[:player_name] %>, your bankroll is $<%= session[:player_bankroll] %>.
+  Bet amount for this round is $<%= session[:bet_amount] %>.
+  <p>What would <%= session[:player_name] %> like to do?</p>
+  <h5><%= session[:player_name] %> has <%= calc_total(session[:player_cards]) %></h5>
+    <form id='hit' method='post' action='/game/player/hit'>
+      <input class='btn btn-success btn-large' type='submit' value='Hit Me!'>
+    </form>
+    <form id='stay' method='post' action='/game/player/stay'>
+      <input class='btn btn-danger btn-large' type='submit' value="I'm Staying!">
+    </form>
+  <% end %>
+</p>
